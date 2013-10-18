@@ -18,71 +18,80 @@
 					};
 					$this.data('preeroda_mult', data);
 
-					var FRAMES_NUMBER	= 589;
-					var IMAGES_URL		= "i_data/mult/s";
-					var loadedImagesArray = new Array();
+					var FRAMES_NUMBER				= 589;
+					var NUM_IMAGES_TO_LOAD_AT_START	= 20;
+					var IMAGES_URL					= "i_data/mult/s";
+					var loadedImagesArray 			= new Array();
 					
-					var currentImage = 0;
 					var loadedImages = 0;
 					
 					var multContainer 	= $this.find(".mult-container");
+					
+					var loader			= $this.find(".loader-wrapper");
+					var imageLoaded		= false;
+					var needToLoadMoreImages = 0;
 					
 					var multScroll 		= $this.find(".mult-scroll");
 					var multSlider 		= multScroll.find(".mult-slider");
 					var sliderStartPos	= 0;
 					var sliderEndPos	= multScroll.outerWidth() - multSlider.outerWidth();
-					console.log(sliderEndPos);
-					
-					//var popup = $(".popup-container");
-
-					/*leftArrow.click(function (e) {
-						if (!$(this).hasClass("hidden")) {
-							if (--currentVideoIndex == 0) {
-								$(this).addClass("hidden");
-							}
-							rightArrow.removeClass("hidden");
-							previewImage.attr("src",settings.plotsVideos[currentVideoIndex].thumb_url);							
+					var	currentFrame	= 0;
+										
+					function showFrame (index) {						
+						if (loadedImagesArray[index]) {
+							multContainer.html(loadedImagesArray[index]);
+							setSliderPosition(index);
 						}
-					});*/
-					
-					function showFrame (index) {
-						currentImage++;
 						
-						multContainer.html(loadedImagesArray[index]);
+						//загружать еще кадры только в случае прокрутки вперед
+						needToLoadMoreImages++;
+						loadMoreImages();
+					}
+					
+					function loadMoreImages() {
+						if(imageLoaded && needToLoadMoreImages > 0 && loadedImages < FRAMES_NUMBER) {
+							needToLoadMoreImages--;
+							loadImage(loadedImages + 1, function () {
+								loadMoreImages();
+							});
+						}
 					}
 					
 					function setSliderPosition (index) {
 						multSlider.css({left : Math.ceil(index / FRAMES_NUMBER * (sliderEndPos - sliderStartPos))});
 					}
 					
-					function loadImage(index, completeCallBack) {
-						if(index <= FRAMES_NUMBER) {
-							var img = new Image();
-							loadedImagesArray[index] = $(img);
-							$(img).load(function () {
-								loadedImages++;
-								
-								//var numLoadedBars = Math.ceil((loadedImages/max)*12);						
-								/*loaderProgressBar.find(".kolbaska").each(function () {
-									var ind = parseInt($(this).attr('id').split("_")[1]);
-									if (ind <= numLoadedBars)
-										$(this).addClass("loaded");
-								});*/
-								showFrame(index);
-								setSliderPosition(index);
-							}).error(function () {
-								
-							}).attr('src', IMAGES_URL + index + ".jpg");
-						} else {
+					function loadImage(index, completeCallBack) {						
+						var img = new Image();
+						loadedImagesArray[index] = $(img);
+						imageLoaded = false;
+						$(img).load(function () {
+							imageLoaded = true;
+							loadedImages++;
 							completeCallBack();
-						}
+						}).error(function () {
+							imageLoaded = true;
+							loadedImages++;
+							loadedImagesArray[index] = null;
+							completeCallBack();
+						}).attr('src', IMAGES_URL + index + ".jpg");						
 					}
 					
 					//init
-					var imageToLoad = 0;
-					setInterval(function () {
-						loadImage(++imageToLoad, function () {});
-					}, 150);					
+					function loadFirstImages () {
+						if (loadedImages == NUM_IMAGES_TO_LOAD_AT_START) {							
+							loader.css({display : "none"});
+							
+							setInterval(function () {
+								showFrame(++currentFrame);
+							}, 150);
+						} else {
+							loadImage(loadedImages + 1, function(){
+								loadFirstImages();
+							});
+						}
+					}
+					loadFirstImages();				
 				}
 			});
 		}
