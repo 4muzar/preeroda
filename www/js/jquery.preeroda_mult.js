@@ -38,14 +38,18 @@
 					var	currentFrame	= 0;
 										
 					function showFrame (index) {						
-						if (loadedImagesArray[index]) {
-							multContainer.html(loadedImagesArray[index]);
+						if (loadedImagesArray[index].found) {
+							if (loadedImagesArray[index].img) {
+								multContainer.html(loadedImagesArray[index].img);																
+							}
 							setSliderPosition(index);
-						}
 						
-						//загружать еще кадры только в случае прокрутки вперед
-						needToLoadMoreImages++;
-						loadMoreImages();
+							//загружать еще кадры только в случае прокрутки вперед
+							needToLoadMoreImages++;
+							loadMoreImages();
+						} else {
+							
+						}
 					}
 					
 					function loadMoreImages() {
@@ -63,16 +67,19 @@
 					
 					function loadImage(index, completeCallBack) {						
 						var img = new Image();
-						loadedImagesArray[index] = $(img);
+						loadedImagesArray[index] = {};
+						loadedImagesArray[index].img = $(img);
 						imageLoaded = false;
 						$(img).load(function () {
+							loadedImagesArray[index].found = true;
 							imageLoaded = true;
 							loadedImages++;
 							completeCallBack();
 						}).error(function () {
+							loadedImagesArray[index].found = false;
+							loadedImagesArray[index].img = null;
 							imageLoaded = true;
 							loadedImages++;
-							loadedImagesArray[index] = null;
 							completeCallBack();
 						}).attr('src', IMAGES_URL + index + ".jpg");						
 					}
