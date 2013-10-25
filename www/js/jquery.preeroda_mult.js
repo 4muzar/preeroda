@@ -38,8 +38,12 @@
 					var	currentFrame	= 0;
 					var animationStopped= false;
 					
+					var interval;
+					var DELAY			= 120;
+					var mainTimerStopped= false;
+					
 					function showFrame (index) {						
-						if (loadedImagesArray[index].loaded) {
+						if (loadedImagesArray[index] && loadedImagesArray[index].loaded) {
 							animationStopped= false;
 							loader.css({display : "none"});
 							
@@ -48,6 +52,12 @@
 								multContainer.html(loadedImagesArray[index].img);																
 							}
 							setSliderPosition(index);
+							
+							if (mainTimerStopped) {
+								setTimeout (function () {
+									showFrame(currentFrame + 1)
+								}, DELAY);								
+							}
 						} else {
 							animationStopped = true;
 							loader.css({display : "block"});
@@ -101,7 +111,7 @@
 							loader.css({display : "none"});
 							
 							var frameToShow = 0;
-							var interval = setInterval(function () {
+							interval = setInterval(function () {
 								if (++frameToShow <= FRAMES_NUMBER) {							
 									showFrame(frameToShow);
 							
@@ -109,9 +119,10 @@
 									needToLoadMoreImages++;
 									loadMoreImages();									
 								} else {
+									mainTimerStopped = true;
 									clearInterval(interval);
 								}
-							}, 120);
+							}, DELAY);
 						} else {
 							loadImage(loadedImages + 1, function(){
 								loadFirstImages();
