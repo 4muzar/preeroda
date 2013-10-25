@@ -36,28 +36,35 @@
 					var sliderStartPos	= 0;
 					var sliderEndPos	= multScroll.outerWidth() - multSlider.outerWidth();
 					var	currentFrame	= 0;
-										
+					var animationStopped= false;
+					
 					function showFrame (index) {						
-						if (loadedImagesArray[index].found) {
+						if (loadedImagesArray[index].loaded) {
+							animationStopped= false;
+							loader.css({display : "none"});
+							
+							currentFrame = index;
 							if (loadedImagesArray[index].img) {
 								multContainer.html(loadedImagesArray[index].img);																
 							}
 							setSliderPosition(index);
-						
-							//загружать еще кадры только в случае прокрутки вперед
-							needToLoadMoreImages++;
-							loadMoreImages();
 						} else {
-							
+							animationStopped = true;
+							loader.css({display : "block"});
+							console.log('image not loaded yet');
 						}
 					}
 					
 					function loadMoreImages() {
-						if(imageLoaded && needToLoadMoreImages > 0 && loadedImages < FRAMES_NUMBER) {
+						if(imageLoaded && needToLoadMoreImages > 0) {
+							if (animationStopped) {
+								showFrame(currentFrame + 1);
+							}
+							
 							needToLoadMoreImages--;
 							loadImage(loadedImages + 1, function () {
 								loadMoreImages();
-							});
+							});							
 						}
 					}
 					
@@ -67,16 +74,18 @@
 					
 					function loadImage(index, completeCallBack) {						
 						var img = new Image();
-						loadedImagesArray[index] = {};
-						loadedImagesArray[index].img = $(img);
+						loadedImagesArray[index] = {
+							loaded  : false,
+							img		: $(img)
+						};
 						imageLoaded = false;
 						$(img).load(function () {
-							loadedImagesArray[index].found = true;
+							loadedImagesArray[index].loaded = true;
 							imageLoaded = true;
 							loadedImages++;
 							completeCallBack();
 						}).error(function () {
-							loadedImagesArray[index].found = false;
+							loadedImagesArray[index].loaded = true;
 							loadedImagesArray[index].img = null;
 							imageLoaded = true;
 							loadedImages++;
@@ -84,14 +93,25 @@
 						}).attr('src', IMAGES_URL + index + ".jpg");						
 					}
 					
+					
+					
 					//init
 					function loadFirstImages () {
 						if (loadedImages == NUM_IMAGES_TO_LOAD_AT_START) {							
 							loader.css({display : "none"});
 							
-							setInterval(function () {
-								showFrame(++currentFrame);
-							}, 150);
+							var frameToShow = 0;
+							var interval = setInterval(function () {
+								if (++frameToShow <= FRAMES_NUMBER) {							
+									showFrame(frameToShow);
+							
+									//загружать еще кадры только в случае прокрутки вперед
+									needToLoadMoreImages++;
+									loadMoreImages();									
+								} else {
+									clearInterval(interval);
+								}
+							}, 120);
 						} else {
 							loadImage(loadedImages + 1, function(){
 								loadFirstImages();
