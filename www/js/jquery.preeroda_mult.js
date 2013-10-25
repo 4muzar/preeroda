@@ -67,7 +67,7 @@
 					
 					function loadMoreImages() {
 						if(imageLoaded && needToLoadMoreImages > 0) {
-							if (animationStopped) {
+							if (animationStopped && currentFrame < FRAMES_NUMBER) {
 								showFrame(currentFrame + 1);
 							}
 							
